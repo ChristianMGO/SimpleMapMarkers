@@ -1,0 +1,7 @@
+Keybinds: {
+	"Place Marker.DisplayName": Place  Marker
+	"Place Map Marker.DisplayName": Place  Map  Marker
+	"Add Map Marker.DisplayName": Add  Map  Marker
+	"Remove Last Marker.DisplayName": Remove  Last  Marker
+	"Add Map Marker in Fullscreen map.DisplayName": Add  Map  Marker in  Fullscreen map
+}

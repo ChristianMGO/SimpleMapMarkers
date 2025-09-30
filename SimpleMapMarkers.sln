@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleMapMarkers", "SimpleMapMarkers.csproj", "{71EF3E65-355B-3AF1-B15C-651D6BC6E869}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71EF3E65-355B-3AF1-B15C-651D6BC6E869}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71EF3E65-355B-3AF1-B15C-651D6BC6E869}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71EF3E65-355B-3AF1-B15C-651D6BC6E869}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71EF3E65-355B-3AF1-B15C-651D6BC6E869}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {947F7B86-4F69-4650-AD51-6DF7D468E28F}
+	EndGlobalSection
+EndGlobal
