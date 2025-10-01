@@ -5,7 +5,6 @@ using Terraria;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.UI;
-using Terraria.GameInput;
 
 namespace SimpleMapMarkers
 {
@@ -13,15 +12,12 @@ namespace SimpleMapMarkers
     {
         private UIPanel mainPanel;
         private UIText titleText;
-        private UIPanel nameInputPanel;
-        private UIText nameDisplayText;
+        private SimpleTextInput nameInputField;
         private UIPanel iconGridPanel;
         private UITextPanel<string> confirmButton;
         private UITextPanel<string> cancelButton;
 
-        private string markerName = "";
         private int selectedIconID = 1;
-        private bool isTyping = false;
 
         public override void OnInitialize()
         {
@@ -46,20 +42,13 @@ namespace SimpleMapMarkers
             nameLabel.Left.Set(15, 0f);
             mainPanel.Append(nameLabel);
 
-            // Name input panel (acts as text box background)
-            nameInputPanel = new UIPanel();
-            nameInputPanel.Width.Set(-30, 1f);
-            nameInputPanel.Height.Set(40, 0f);
-            nameInputPanel.Top.Set(85, 0f);
-            nameInputPanel.Left.Set(15, 0f);
-            nameInputPanel.BackgroundColor = new Color(35, 40, 83);
-            mainPanel.Append(nameInputPanel);
-
-            // Name display text
-            nameDisplayText = new UIText("", 0.9f);
-            nameDisplayText.Top.Set(10, 0f);
-            nameDisplayText.Left.Set(10, 0f);
-            nameInputPanel.Append(nameDisplayText);
+            // Name input field using our custom SimpleTextInput
+            nameInputField = new SimpleTextInput("Click to type...");
+            nameInputField.Width.Set(-30, 1f);
+            nameInputField.Height.Set(40, 0f);
+            nameInputField.Top.Set(85, 0f);
+            nameInputField.Left.Set(15, 0f);
+            mainPanel.Append(nameInputField);
 
             // Icon selection label
             UIText iconLabel = new UIText("Select Icon:", 0.9f);
@@ -174,6 +163,9 @@ namespace SimpleMapMarkers
         {
             if (MarkerSystem.PendingMarkerPosition.HasValue)
             {
+                // Get the marker name from the text field
+                string markerName = nameInputField.CurrentText;
+                
                 // Create the marker with selected name and icon
                 MarkerSystem.AddMarker(
                     MarkerSystem.PendingMarkerPosition.Value,
@@ -206,10 +198,8 @@ namespace SimpleMapMarkers
 
         public void OnShow()
         {
-            markerName = "";
-            nameDisplayText.SetText("");
+            nameInputField.SetText("");
             selectedIconID = 1;
-            isTyping = false;
             
             // Refresh icon grid
             iconGridPanel.RemoveAllChildren();
@@ -220,92 +210,10 @@ namespace SimpleMapMarkers
         {
             base.Update(gameTime);
 
-            // Check for clicking anywhere in the main panel area for text input
-            Rectangle panelRect = nameInputPanel.GetDimensions().ToRectangle();
-            
-            // Debug: Check if mouse is over the panel
-            if (panelRect.Contains(Main.MouseScreen.ToPoint()))
-            {
-                nameInputPanel.BackgroundColor = new Color(50, 60, 120); // Hover effect
-                
-                if (Main.mouseLeft && Main.mouseLeftRelease)
-                {
-                    isTyping = true;
-                    Main.NewText("Typing mode ON", Color.Green);
-                    Terraria.Audio.SoundEngine.PlaySound(Terraria.ID.SoundID.MenuTick);
-                }
-            }
-            else
-            {
-                nameInputPanel.BackgroundColor = new Color(35, 40, 83);
-            }
-
-            // Handle keyboard input when typing is active
-            if (isTyping)
-            {
-                Main.blockInput = true;
-                PlayerInput.WritingText = true;
-                Main.instance.HandleIME();
-                
-                string inputText = Main.GetInputText(markerName);
-                
-                if (inputText != markerName)
-                {
-                    markerName = inputText;
-                    
-                    // Limit length
-                    if (markerName.Length > 30)
-                        markerName = markerName.Substring(0, 30);
-                }
-                
-                // Update display with blinking cursor
-                if (string.IsNullOrEmpty(markerName))
-                {
-                    nameDisplayText.SetText((Main.GameUpdateCount % 40 < 20 ? "|" : ""));
-                    nameDisplayText.TextColor = Color.White;
-                }
-                else
-                {
-                    nameDisplayText.SetText(markerName + (Main.GameUpdateCount % 40 < 20 ? "|" : ""));
-                    nameDisplayText.TextColor = Color.White;
-                }
-
-                // Click outside to stop typing
-                if (Main.mouseLeft && Main.mouseLeftRelease)
-                {
-                    if (!panelRect.Contains(Main.MouseScreen.ToPoint()))
-                    {
-                        isTyping = false;
-                        Main.blockInput = false;
-                        PlayerInput.WritingText = false;
-                        Main.NewText("Typing mode OFF", Color.Red);
-                    }
-                }
-            }
-            else
-            {
-                Main.blockInput = false;
-                PlayerInput.WritingText = false;
-                
-                if (string.IsNullOrEmpty(markerName))
-                {
-                    nameDisplayText.SetText("Click here to type...");
-                    nameDisplayText.TextColor = Color.Gray;
-                }
-                else
-                {
-                    nameDisplayText.SetText(markerName);
-                    nameDisplayText.TextColor = Color.White;
-                }
-            }
-
             // ESC to close
             if (Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape) && 
                 !Main.oldKeyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape))
             {
-                isTyping = false;
-                Main.blockInput = false;
-                PlayerInput.WritingText = false;
                 CancelButtonClick(null, null);
             }
         }
