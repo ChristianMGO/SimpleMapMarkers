@@ -33,31 +33,24 @@ namespace SimpleMapMarkers
             AddMarker(worldPosition, -2, "Unnamed Marker", false);
         }
 
-        public static void RemoveLastMarker()
+        public static void RemoveMarker(int markerID)
         {
-            if (Markers.Count > 0)
-                Markers.RemoveAt(Markers.Count - 1);
-        }
-
-        public static void RemoveMarker(int index)
-        {
+            int index = Markers.FindIndex(m => m.ID == markerID);
             if (index >= 0 && index < Markers.Count)
             {
                 Marker marker = Markers[index];
-                
-                // Only allow removing your own markers or if you're the server
-                if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer || 
+
+                if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer ||
                     marker.OwnerName == Main.LocalPlayer.name ||
                     Main.netMode == Terraria.ID.NetmodeID.Server)
                 {
                     Main.NewText("Marker removed: " + marker.Name, Color.White);
-                    
-                    // If multiplayer and public, sync removal
+
                     if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient && marker.IsPublic)
                     {
-                        SendMarkerRemovalToServer(index);
+                        SendMarkerRemovalToServer(markerID); // Send ID, not index
                     }
-                    
+
                     Markers.RemoveAt(index);
                 }
                 else
@@ -89,7 +82,8 @@ namespace SimpleMapMarkers
         private static void SendMarkerToServer(Marker marker)
         {
             ModPacket packet = ModContent.GetInstance<SimpleMapMarkers>().GetPacket();
-            packet.Write((byte)0); // Message type: Add Marker
+            packet.Write((byte)0);
+            packet.Write(marker.ID);
             packet.Write(marker.Position.X);
             packet.Write(marker.Position.Y);
             packet.Write(marker.IconID);
@@ -99,11 +93,11 @@ namespace SimpleMapMarkers
         }
 
         // Multiplayer: Send marker removal to server
-        private static void SendMarkerRemovalToServer(int index)
+        private static void SendMarkerRemovalToServer(int markerID)
         {
             ModPacket packet = ModContent.GetInstance<SimpleMapMarkers>().GetPacket();
             packet.Write((byte)1); // Message type: Remove Marker
-            packet.Write(index);
+            packet.Write(markerID);
             packet.Send();
         }
 
@@ -119,6 +113,7 @@ namespace SimpleMapMarkers
                 {
                     markerList.Add(new TagCompound
                     {
+                        ["ID"] = marker.ID,
                         ["X"] = marker.Position.X,
                         ["Y"] = marker.Position.Y,
                         ["IconID"] = marker.IconID,
@@ -140,18 +135,32 @@ namespace SimpleMapMarkers
                 var markerList = tag.GetList<TagCompound>("Markers");
                 foreach (var markerTag in markerList)
                 {
-                    bool isPublic = markerTag.ContainsKey("IsPublic") ? markerTag.GetBool("IsPublic") : false;
-                    string ownerName = markerTag.ContainsKey("OwnerName") ? markerTag.GetString("OwnerName") : "";
-                    
-                    Markers.Add(new Marker(
-                        new Vector2(markerTag.GetFloat("X"), markerTag.GetFloat("Y")),
-                        markerTag.GetInt("IconID"),
-                        markerTag.GetString("Name"),
-                        isPublic,
-                        ownerName
-                    ));
+                    // Create marker and set properties directly
+                    Marker marker = new Marker
+                    {
+                        ID = markerTag.ContainsKey("ID") ? markerTag.GetInt("ID") : 0,
+                        Position = new Vector2(markerTag.GetFloat("X"), markerTag.GetFloat("Y")),
+                        IconID = markerTag.GetInt("IconID"),
+                        Name = markerTag.GetString("Name"),
+                        IsPublic = markerTag.ContainsKey("IsPublic") ? markerTag.GetBool("IsPublic") : false,
+                        OwnerName = markerTag.ContainsKey("OwnerName") ? markerTag.GetString("OwnerName") : ""
+                    };
+
+                    Markers.Add(marker);
                 }
                 ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Loaded {Markers.Count} markers");
+            }
+        }
+
+        public override void OnWorldLoad()
+        {
+            // Request marker sync from server when joining multiplayer
+            if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+            {
+                ModPacket packet = ModContent.GetInstance<SimpleMapMarkers>().GetPacket();
+                packet.Write((byte)2); // Request sync
+                packet.Send();
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info("Requested marker sync from server");
             }
         }
 

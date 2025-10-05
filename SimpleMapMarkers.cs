@@ -1,8 +1,12 @@
 using Terraria.ModLoader;
+using Terraria.ModLoader.Config;
 using Terraria.GameContent;
 using Terraria;
 using System.IO;
 using Microsoft.Xna.Framework;
+using System;
+using System.ComponentModel;
+using System.Linq;
 
 namespace SimpleMapMarkers
 {
@@ -33,66 +37,127 @@ namespace SimpleMapMarkers
             switch (messageType)
             {
                 case 0: // Add Marker
+                    int id = reader.ReadInt32();
                     float x = reader.ReadSingle();
                     float y = reader.ReadSingle();
                     int iconID = reader.ReadInt32();
                     string name = reader.ReadString();
                     string ownerName = reader.ReadString();
 
+                    Marker newMarker = new Marker
+                    {
+                        ID = id,
+                        Position = new Vector2(x, y),
+                        IconID = iconID,
+                        Name = name,
+                        IsPublic = true,
+                        OwnerName = ownerName
+                    };
+
                     if (Main.netMode == Terraria.ID.NetmodeID.Server)
                     {
-                        // Server: Add marker and broadcast to all clients
-                        Marker newMarker = new Marker(new Vector2(x, y), iconID, name, true, ownerName);
                         MarkerSystem.Markers.Add(newMarker);
 
-                        // Broadcast to all other clients
                         ModPacket packet = GetPacket();
                         packet.Write((byte)0);
+                        packet.Write(id);
                         packet.Write(x);
                         packet.Write(y);
                         packet.Write(iconID);
                         packet.Write(name);
                         packet.Write(ownerName);
-                        packet.Send(-1, whoAmI); // Send to everyone except sender
+                        packet.Send(-1, whoAmI);
                     }
                     else
                     {
-                        // Client: Receive marker from server
-                        Marker newMarker = new Marker(new Vector2(x, y), iconID, name, true, ownerName);
                         MarkerSystem.Markers.Add(newMarker);
                         Main.NewText($"Public marker added by {ownerName}: {name}", Color.Yellow);
                     }
                     break;
 
                 case 1: // Remove Marker
-                    int index = reader.ReadInt32();
+                    int markerID = reader.ReadInt32(); // Read ID instead of index
 
                     if (Main.netMode == Terraria.ID.NetmodeID.Server)
                     {
-                        // Server: Remove marker and broadcast
-                        if (index >= 0 && index < MarkerSystem.Markers.Count)
+                        int index = MarkerSystem.Markers.FindIndex(m => m.ID == markerID);
+                        if (index >= 0)
                         {
                             MarkerSystem.Markers.RemoveAt(index);
 
-                            // Broadcast removal to all clients
                             ModPacket packet = GetPacket();
                             packet.Write((byte)1);
-                            packet.Write(index);
+                            packet.Write(markerID); // Send ID
                             packet.Send(-1, whoAmI);
                         }
                     }
                     else
                     {
-                        // Client: Receive removal from server
-                        if (index >= 0 && index < MarkerSystem.Markers.Count)
+                        int index = MarkerSystem.Markers.FindIndex(m => m.ID == markerID);
+                        if (index >= 0)
                         {
                             MarkerSystem.Markers.RemoveAt(index);
                         }
                     }
                     break;
+
+                case 2: // Request full sync (sent by joining client)
+                    if (Main.netMode == Terraria.ID.NetmodeID.Server)
+                    {
+                        Logger.Info($"Client {whoAmI} requested marker sync");
+                        SyncAllMarkersToClient(whoAmI);
+                    }
+                    break;
+                case 3: // Full sync response (sent by server to client)
+                    int markerCount = reader.ReadInt32();
+                    Logger.Info($"Receiving {markerCount} markers from server");
+
+                    // Clear existing markers
+                    MarkerSystem.Markers.Clear();
+
+                    // Read all markers
+                    for (int i = 0; i < markerCount; i++)
+                    {
+                        Marker marker = new Marker
+                        {
+                            ID = reader.ReadInt32(),
+                            Position = new Vector2(reader.ReadSingle(), reader.ReadSingle()),
+                            IconID = reader.ReadInt32(),
+                            Name = reader.ReadString(),
+                            IsPublic = reader.ReadBoolean(),
+                            OwnerName = reader.ReadString()
+                        };
+                        MarkerSystem.Markers.Add(marker);
+                    }
+
+                    Main.NewText($"Synced {markerCount} markers from server", Color.Green);
+                    break;
             }
         }
 
+        private void SyncAllMarkersToClient(int clientWhoAmI)
+        {
+            // Only send public markers
+            var publicMarkers = MarkerSystem.Markers.Where(m => m.IsPublic).ToList();
+
+            ModPacket packet = GetPacket();
+            packet.Write((byte)3); // Full sync message
+            packet.Write(publicMarkers.Count);
+
+            foreach (var marker in publicMarkers)
+            {
+                packet.Write(marker.ID);
+                packet.Write(marker.Position.X);
+                packet.Write(marker.Position.Y);
+                packet.Write(marker.IconID);
+                packet.Write(marker.Name);
+                packet.Write(marker.IsPublic);
+                packet.Write(marker.OwnerName);
+            }
+
+            packet.Send(clientWhoAmI);
+            Logger.Info($"Sent {publicMarkers.Count} markers to client {clientWhoAmI}");
+        }
         private void PreloadIconTextures()
         {
             // Force load all item textures used in ItemIconRegistry
@@ -109,6 +174,7 @@ namespace SimpleMapMarkers
                     try
                     {
                         Main.Assets.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.HouseIconPath);
+                        Logger.Info($"Successfully preloaded house icon from {ItemIconRegistry.HouseIconPath}");
                     }
                     catch
                     {
@@ -117,14 +183,50 @@ namespace SimpleMapMarkers
                 }
                 else if (iconID == -2)
                 {
-                    // Preload custom marker icon
                     try
                     {
-                        ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerRedPath);
+                        var texture = ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerRedPath);
+                        Logger.Info($"Successfully preloaded Red marker from {ItemIconRegistry.CustomMarkerRedPath}");
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        Logger.Warn($"Failed to preload custom marker icon at {ItemIconRegistry.CustomMarkerRedPath}");
+                        Logger.Warn($"Failed to preload Red marker at {ItemIconRegistry.CustomMarkerRedPath}: {ex.Message}");
+                    }
+                }
+                else if (iconID == -3)
+                {
+                    try
+                    {
+                        var texture = ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerBluePath);
+                        Logger.Info($"Successfully preloaded Blue marker from {ItemIconRegistry.CustomMarkerBluePath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Failed to preload Blue marker at {ItemIconRegistry.CustomMarkerBluePath}: {ex.Message}");
+                    }
+                }
+                else if (iconID == -4)
+                {
+                    try
+                    {
+                        var texture = ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerGreenPath);
+                        Logger.Info($"Successfully preloaded Green marker from {ItemIconRegistry.CustomMarkerGreenPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Failed to preload Green marker at {ItemIconRegistry.CustomMarkerGreenPath}: {ex.Message}");
+                    }
+                }
+                else if (iconID == -5)
+                {
+                    try
+                    {
+                        var texture = ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerYellowPath);
+                        Logger.Info($"Successfully preloaded Yellow marker from {ItemIconRegistry.CustomMarkerYellowPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn($"Failed to preload Yellow marker at {ItemIconRegistry.CustomMarkerYellowPath}: {ex.Message}");
                     }
                 }
             }

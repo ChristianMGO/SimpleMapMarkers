@@ -7,3 +7,24 @@ Keybinds: {
 	"Add Marker at Player Position.DisplayName": Add  Marker at  Player  Position
 	"Remove Hovered Marker.DisplayName": Remove  Hovered  Marker
 }
+
+Configs: {
+	SimpleMapMarkersConfig: {
+		DisplayName: Simple Map Markers Config
+
+		GeneralSettings: {
+			Header: General Settings
+			$parentVal: General Settings
+		}
+
+		TooltipBackground: {
+			Label: Tooltip Background
+			Tooltip: Toggle whether to show the blue-ish background when hovering over a marker on the map.
+		}
+
+		Background: {
+			Label: Tooltip Background
+			Tooltip: ""
+		}
+	}
+}

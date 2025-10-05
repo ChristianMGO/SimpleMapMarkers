@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SimpleMapMarkers")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+81b9d6a61f4f5a19f51d1cd4c423116e44eb619e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2db767014a6db80e4e0ffc0c40c9ac129e1f84b6")]
 [assembly: System.Reflection.AssemblyProductAttribute("SimpleMapMarkers")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SimpleMapMarkers")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

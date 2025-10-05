@@ -16,14 +16,24 @@ namespace SimpleMapMarkers
             // Only create UI on client
             if (!Main.dedServ)
             {
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info("Creating MarkerCreationUI...");
                 MarkerCreationUI = new MarkerCreationUI();
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info("Activating MarkerCreationUI...");
                 MarkerCreationUI.Activate();
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info("Creating UserInterface...");
                 _markerCreationInterface = new UserInterface();
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info("UISystem.Load() complete");
             }
         }
 
         public override void UpdateUI(GameTime gameTime)
         {
+            // Block player input when marker creation UI is open
+            if (_markerCreationInterface?.CurrentState != null)
+            {
+                Main.LocalPlayer.mouseInterface = true;
+            }
+
             if (_markerCreationInterface?.CurrentState != null)
             {
                 _markerCreationInterface.Update(gameTime);

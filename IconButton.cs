@@ -55,7 +55,7 @@ namespace SimpleMapMarkers
             // Draw border
             int borderWidth = 2;
             Color borderColor = _isSelected ? Color.Gold : Color.Black;
-            
+
             // Top, Bottom, Left, Right borders
             spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, borderWidth), borderColor);
             spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - borderWidth, hitbox.Width, borderWidth), borderColor);
@@ -126,39 +126,43 @@ namespace SimpleMapMarkers
                 case -5: // Yellow custom marker icon
                     try
                     {
-                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.YellowCustomMarkerIconPath).Value;
+                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerYellowPath).Value;
                     }
                     catch
                     {
                         return null;
-                    };
+                    }
+                    ;
                 case -4: // Green custom marker icon
                     try
                     {
-                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.GreenCustomMarkerIconPath).Value;
+                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerGreenPath).Value;
                     }
                     catch
                     {
                         return null;
-                    };
+                    }
+                    ;
                 case -3: // Blue custom marker icon
                     try
                     {
-                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.BlueCustomMarkerIconPath).Value;
+                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerBluePath).Value;
                     }
                     catch
                     {
                         return null;
-                    };
+                    }
+                    ;
                 case -2: // Red custom marker icon
                     try
                     {
-                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.RedCustomMarkerIconPath).Value;
+                        return ModContent.Request<Microsoft.Xna.Framework.Graphics.Texture2D>(ItemIconRegistry.CustomMarkerRedPath).Value;
                     }
                     catch
                     {
                         return null;
-                    };
+                    }
+                    ;
 
                 case -1: // House icon
                     try
@@ -168,10 +172,11 @@ namespace SimpleMapMarkers
                     catch
                     {
                         return null;
-                    };
+                    }
+                    ;
 
             }
-            
+
             // Regular item icons
             if (iconID > 0 && iconID < ItemID.Count)
             {

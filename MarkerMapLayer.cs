@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Terraria;
 using Terraria.Map;
 using Terraria.ModLoader;
+using Terraria.ModLoader.Config;
+using SimpleMapMarkers.Configs;
 
 namespace SimpleMapMarkers
 {
@@ -49,10 +51,10 @@ namespace SimpleMapMarkers
         {
             // Get map center position (in tiles)
             Vector2 mapCenter = Main.mapFullscreenPos;
-            
+
             // Get map scale
             float mapScale = Main.mapFullscreenScale;
-            
+
             // Get screen dimensions (already accounts for UI scale internally)
             Vector2 screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
             Vector2 screenCenter = screenSize / 2f;
@@ -76,6 +78,8 @@ namespace SimpleMapMarkers
         {
             int hoveredMarkerIndex = -1;
             float closestDistance = 30f; // Max distance to be considered "hovering"
+            var config = ModContent.GetInstance<SimpleMapMarkersConfig>();
+            bool showBackground = config.TooltipBackground;
 
             for (int i = 0; i < MarkerSystem.Markers.Count; i++)
             {
@@ -92,12 +96,20 @@ namespace SimpleMapMarkers
                 // Check if mouse is hovering over this marker
                 Vector2 mousePos = new Vector2(Main.mouseX, Main.mouseY);
                 float distance = Vector2.Distance(mousePos, markerOnMap);
-                
+
                 bool isHovered = distance < closestDistance;
                 if (isHovered && (hoveredMarkerIndex == -1 || distance < closestDistance))
                 {
                     hoveredMarkerIndex = i;
                     closestDistance = distance;
+
+                    if (SimpleMapMarkers.RemoveMarkerKeybind.JustPressed)
+                    {
+                        ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Attempting to remove marker at index {i}: {MarkerSystem.Markers[i].Name}");
+                        MarkerSystem.RemoveMarker(MarkerSystem.Markers[i].ID);
+                        Terraria.Audio.SoundEngine.PlaySound(Terraria.ID.SoundID.MenuClose);
+                        return;
+                    }
                 }
 
                 // Get icon texture based on marker's IconID
@@ -107,7 +119,7 @@ namespace SimpleMapMarkers
 
                 // Scale marker slightly larger when hovered
                 float scale = isHovered ? 1.2f : 1f;
-                
+
                 // Scale down large textures to fit nicely on map
                 if (markerTexture.Width > 32 || markerTexture.Height > 32)
                 {
@@ -132,37 +144,34 @@ namespace SimpleMapMarkers
             if (hoveredMarkerIndex != -1)
             {
                 var hoveredMarker = MarkerSystem.Markers[hoveredMarkerIndex];
-                DrawMarkerTooltip(hoveredMarker);
+                if (showBackground)
+                {
+                    Terraria.ModLoader.UI.UICommon.TooltipMouseText(GetMarkerTooltipText(hoveredMarker)); // Ensure tooltip is drawn
+                }
+                else
+                {
+                    Main.instance.MouseText(GetMarkerTooltipText(hoveredMarker)); // Draw without background
+                }
             }
         }
 
         private Texture2D GetMarkerIconTexture(int iconID)
         {
             // Handle special icons
-            if (iconID == -2) // Custom marker icon
+            switch (iconID)
             {
-                try
-                {
-                    return ModContent.Request<Texture2D>("SimpleMapMarkers/Assets/Images/MapMarkers/marker_icon").Value;
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-            else if (iconID == -1) // House icon
-            {
-                try
-                {
+                case -5: // Yellow custom marker icon
+                    return ModContent.Request<Texture2D>(ItemIconRegistry.CustomMarkerYellowPath).Value;
+                case -4: // Green custom marker icon
+                    return ModContent.Request<Texture2D>(ItemIconRegistry.CustomMarkerGreenPath).Value;
+                case -3: // Blue custom marker icon
+                    return ModContent.Request<Texture2D>(ItemIconRegistry.CustomMarkerBluePath).Value;
+                case -2: // Red custom marker icon
+                    return ModContent.Request<Texture2D>(ItemIconRegistry.CustomMarkerRedPath).Value;
+                case -1: // House icon
                     return Main.Assets.Request<Texture2D>(ItemIconRegistry.HouseIconPath).Value;
-                }
-                catch
-                {
-                    // Fallback to bed item
-                    return Terraria.GameContent.TextureAssets.Item[Terraria.ID.ItemID.Bed].Value;
-                }
             }
-            
+
             // Regular item icons
             if (iconID > 0 && iconID < Terraria.ID.ItemID.Count)
             {
@@ -180,25 +189,17 @@ namespace SimpleMapMarkers
             return null;
         }
 
-        private void DrawMarkerTooltip(Marker marker)
+        private string GetMarkerTooltipText(Marker marker)
         {
-            // Get marker info
             string markerName = marker.Name;
-            int tileX = (int)(marker.Position.X / 16f);
-            int tileY = (int)(marker.Position.Y / 16f);
-            string coordinates = $"({tileX}, {tileY})";
 
-            // Build tooltip text
-            string tooltipText = markerName + "\n" + coordinates;
-            
-            // Add owner name if it's a public marker
+            string tooltipText = markerName;
+
             if (marker.IsPublic && !string.IsNullOrEmpty(marker.OwnerName))
             {
                 tooltipText += $"\nBy: {marker.OwnerName}";
             }
-
-            // Use game's tooltip system
-            Main.hoverItemName = tooltipText;
+            return tooltipText;
         }
     }
 }
