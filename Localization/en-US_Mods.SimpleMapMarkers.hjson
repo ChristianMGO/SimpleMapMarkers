@@ -4,4 +4,6 @@ Keybinds: {
 	"Add Map Marker.DisplayName": Add  Map  Marker
 	"Remove Last Marker.DisplayName": Remove  Last  Marker
 	"Add Map Marker in Fullscreen map.DisplayName": Add  Map  Marker in  Fullscreen map
+	"Add Marker at Player Position.DisplayName": Add  Marker at  Player  Position
+	"Remove Hovered Marker.DisplayName": Remove  Hovered  Marker
 }

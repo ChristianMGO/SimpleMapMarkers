@@ -1,8 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Linq;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
+using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
 
@@ -16,8 +19,9 @@ namespace SimpleMapMarkers
         private UIPanel iconGridPanel;
         private UITextPanel<string> confirmButton;
         private UITextPanel<string> cancelButton;
+        private UICheckbox publicCheckbox;
 
-        private int selectedIconID = 1;
+        private int selectedIconID = -2; // Default to custom marker icon
 
         public override void OnInitialize()
         {
@@ -56,16 +60,34 @@ namespace SimpleMapMarkers
             iconLabel.Left.Set(15, 0f);
             mainPanel.Append(iconLabel);
 
-            // Icon grid panel
+            // Icon grid panel - taller to fit all icons
             iconGridPanel = new UIPanel();
             iconGridPanel.Width.Set(-30, 1f);
-            iconGridPanel.Height.Set(150, 0f);
+            iconGridPanel.Height.Set(180, 0f); // Increased from 150 to 180
             iconGridPanel.Top.Set(165, 0f);
             iconGridPanel.Left.Set(15, 0f);
             iconGridPanel.BackgroundColor = new Color(35, 40, 83);
             mainPanel.Append(iconGridPanel);
 
             CreateIconGrid();
+
+
+            // Public checkbox (show when multiplayer is active - either as client or when hosting)
+            if (Main.netMode != Terraria.ID.NetmodeID.SinglePlayer)
+            {
+                publicCheckbox = new UICheckbox("Public Marker", false);
+                publicCheckbox.Width.Set(150, 0f);
+                publicCheckbox.Height.Set(24, 0f);
+                publicCheckbox.Top.Set(362, 0f);
+                publicCheckbox.Left.Set(15, 0f);
+                mainPanel.Append(publicCheckbox);
+                
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Public checkbox added. NetMode: {Main.netMode}");
+            }
+            else
+            {
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Singleplayer detected, no checkbox. NetMode: {Main.netMode}");
+            }
 
             // Confirm button
             confirmButton = new UITextPanel<string>("Confirm");
@@ -106,9 +128,13 @@ namespace SimpleMapMarkers
 
         private void CreateIconGrid()
         {
-            float xOffset = 10;
-            float yOffset = 10;
-            int iconsPerRow = 8;
+            iconGridPanel.RemoveAllChildren();
+            
+            ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Creating icon grid with {ItemIconRegistry.ItemNames.Count} icons");
+            
+            float xOffset = 5;
+            float yOffset = 5;
+            int iconsPerRow = 7;
             int iconIndex = 0;
 
             foreach (var kvp in ItemIconRegistry.ItemNames)
@@ -117,36 +143,33 @@ namespace SimpleMapMarkers
                 string iconName = kvp.Value;
 
                 // Create icon button
-                UIPanel iconButton = new UIPanel();
+                IconButton iconButton = new IconButton(iconID, iconName, selectedIconID == iconID);
                 iconButton.Width.Set(48, 0f);
                 iconButton.Height.Set(48, 0f);
                 iconButton.Left.Set(xOffset, 0f);
                 iconButton.Top.Set(yOffset, 0f);
-                iconButton.BackgroundColor = selectedIconID == iconID ? Color.Gold : Color.DarkBlue;
                 
                 // Store iconID in the button for click handling
                 iconButton.OnLeftClick += (evt, element) => SelectIcon(iconID);
-                iconButton.OnMouseOver += (evt, element) => 
-                {
-                    iconButton.BackgroundColor = Color.Yellow;
-                };
-                iconButton.OnMouseOut += (evt, element) => 
-                {
-                    iconButton.BackgroundColor = selectedIconID == iconID ? Color.Gold : Color.DarkBlue;
-                };
 
                 iconGridPanel.Append(iconButton);
+                
+                ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Added icon {iconName} (ID: {iconID}) at position ({xOffset}, {yOffset})");
 
                 // Move to next position
                 xOffset += 58;
                 iconIndex++;
                 
+                // Wrap to next row after iconsPerRow icons
                 if (iconIndex % iconsPerRow == 0)
                 {
-                    xOffset = 10;
+                    xOffset = 5;
                     yOffset += 58;
                 }
             }
+            
+            iconGridPanel.Recalculate();
+            ModContent.GetInstance<SimpleMapMarkers>().Logger.Info($"Icon grid created with {iconIndex} icons total");
         }
 
         private void SelectIcon(int iconID)
@@ -161,16 +184,23 @@ namespace SimpleMapMarkers
 
         private void ConfirmButtonClick(UIMouseEvent evt, UIElement listeningElement)
         {
+            // CRITICAL: Reset input state before doing anything
+            nameInputField.Unfocus();
+            
             if (MarkerSystem.PendingMarkerPosition.HasValue)
             {
                 // Get the marker name from the text field
                 string markerName = nameInputField.CurrentText;
                 
-                // Create the marker with selected name and icon
+                // Get isPublic state from checkbox (false if in singleplayer where checkbox doesn't exist)
+                bool isPublic = publicCheckbox != null && publicCheckbox.IsChecked;
+                
+                // Create the marker with selected name, icon, and public/private setting
                 MarkerSystem.AddMarker(
                     MarkerSystem.PendingMarkerPosition.Value,
                     selectedIconID,
-                    string.IsNullOrWhiteSpace(markerName) ? "Unnamed Marker" : markerName
+                    string.IsNullOrWhiteSpace(markerName) ? "Unnamed Marker" : markerName,
+                    isPublic
                 );
 
                 // Clear pending position
@@ -186,6 +216,9 @@ namespace SimpleMapMarkers
 
         private void CancelButtonClick(UIMouseEvent evt, UIElement listeningElement)
         {
+            // CRITICAL: Reset input state before doing anything
+            nameInputField.Unfocus();
+            
             // Clear pending position
             MarkerSystem.PendingMarkerPosition = null;
 
@@ -214,6 +247,7 @@ namespace SimpleMapMarkers
             if (Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape) && 
                 !Main.oldKeyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape))
             {
+                nameInputField.Unfocus();
                 CancelButtonClick(null, null);
             }
         }

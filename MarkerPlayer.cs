@@ -12,14 +12,9 @@ namespace SimpleMapMarkers
             {
                 // Store player's current position
                 MarkerSystem.PendingMarkerPosition = Player.Center;
-                
+
                 // Open marker creation UI
                 ModContent.GetInstance<UISystem>().ShowMarkerCreationUI();
-            }
-            
-            if (SimpleMapMarkers.RemoveMarkerKeybind.JustPressed)
-            {
-                MarkerSystem.RemoveLastMarker();
             }
         }
     }

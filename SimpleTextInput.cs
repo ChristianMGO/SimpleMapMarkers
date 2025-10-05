@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using ReLogic.Content;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameInput;
@@ -14,18 +13,12 @@ namespace SimpleMapMarkers
         private int _maxLength = 30;
         private bool _isFocused = false;
         private string _hintText = "";
-        private static Asset<Texture2D> _backgroundTexture;
-        private static Asset<Texture2D> _borderTexture;
 
         public string CurrentText => _currentText;
 
         public SimpleTextInput(string hintText = "")
         {
             _hintText = hintText;
-            if (_backgroundTexture == null)
-                _backgroundTexture = Main.Assets.Request<Texture2D>("Images/UI/CharCreation/PanelGrayscale");
-            if (_borderTexture == null)
-                _borderTexture = Main.Assets.Request<Texture2D>("Images/UI/CharCreation/CategoryPanelBorder");
         }
 
         public void SetText(string text)
@@ -38,73 +31,55 @@ namespace SimpleMapMarkers
         public override void LeftClick(UIMouseEvent evt)
         {
             base.LeftClick(evt);
-            
+            Focus();
+        }
+
+        private void Focus()
+        {
             _isFocused = true;
-            
-            // CRITICAL: Initialize text input system properly
-            Main.chatRelease = false;
-            Main.editSign = false;
-            Main.editChest = false;
+            Main.clrInput();
             Main.blockInput = true;
-            Main.inputTextEnter = false;
-            Main.inputTextEscape = false;
-            
-            Terraria.Audio.SoundEngine.PlaySound(Terraria.ID.SoundID.MenuTick);
+            Main.drawingPlayerChat = true;
+            Main.chatRelease = false;
+        }
+
+        public void Unfocus()
+        {
+            _isFocused = false;
+            Main.blockInput = false;
+            Main.drawingPlayerChat = false;
+            Main.chatRelease = true;
         }
 
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
 
-            // Handle text input when focused
             if (_isFocused)
             {
-                Main.blockInput = true;
                 PlayerInput.WritingText = true;
                 Main.instance.HandleIME();
 
-                string newText = Main.GetInputText(_currentText);
-                if (newText != _currentText)
+                // Get input text
+                string newString = Main.GetInputText(_currentText);
+                if (!newString.Equals(_currentText))
                 {
-                    _currentText = newText;
+                    _currentText = newString;
                     if (_currentText.Length > _maxLength)
+                    {
                         _currentText = _currentText.Substring(0, _maxLength);
+                    }
                 }
 
-                // Press Enter to confirm and unfocus
-                if (Main.inputTextEnter || Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Enter))
-                {
-                    _isFocused = false;
-                    Main.blockInput = false;
-                    PlayerInput.WritingText = false;
-                    Main.inputTextEnter = false;
-                }
-                
-                // Press Escape to cancel and unfocus
-                if (Main.inputTextEscape || Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.Escape))
-                {
-                    _isFocused = false;
-                    Main.blockInput = false;
-                    PlayerInput.WritingText = false;
-                    Main.inputTextEscape = false;
-                }
-
-                // Click outside to unfocus
+                // Unfocus on click outside
                 if (Main.mouseLeft && Main.mouseLeftRelease)
                 {
                     Rectangle hitbox = GetDimensions().ToRectangle();
                     if (!hitbox.Contains(Main.MouseScreen.ToPoint()))
                     {
-                        _isFocused = false;
-                        Main.blockInput = false;
-                        PlayerInput.WritingText = false;
+                        Unfocus();
                     }
                 }
-            }
-            else
-            {
-                Main.blockInput = false;
-                PlayerInput.WritingText = false;
             }
         }
 
@@ -112,38 +87,55 @@ namespace SimpleMapMarkers
         {
             Rectangle hitbox = GetDimensions().ToRectangle();
 
-            // Draw simple rectangle background
-            Color bgColor = _isFocused ? new Color(50, 60, 120) : new Color(35, 40, 83);
-            
-            // Draw background as filled rectangle
-            Texture2D pixel = Main.Assets.Request<Texture2D>("Images/UI/CharCreation/PanelGrayscale").Value;
+            // Draw simple white/light background using TextureAssets
+            Color bgColor = _isFocused ? Color.White : new Color(240, 240, 240);
+
+            // Use a 1x1 white texture from game assets
+            Texture2D pixel = Terraria.GameContent.TextureAssets.MagicPixel.Value;
             spriteBatch.Draw(pixel, hitbox, bgColor);
 
             // Draw border
             int borderWidth = 2;
-            // Top
-            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, borderWidth), Color.Black);
-            // Bottom
-            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - borderWidth, hitbox.Width, borderWidth), Color.Black);
-            // Left
-            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y, borderWidth, hitbox.Height), Color.Black);
-            // Right
-            spriteBatch.Draw(pixel, new Rectangle(hitbox.X + hitbox.Width - borderWidth, hitbox.Y, borderWidth, hitbox.Height), Color.Black);
+            Color borderColor = _isFocused ? Color.Black : Color.Gray;
+
+            // Top border
+            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y, hitbox.Width, borderWidth), borderColor);
+            // Bottom border
+            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y + hitbox.Height - borderWidth, hitbox.Width, borderWidth), borderColor);
+            // Left border
+            spriteBatch.Draw(pixel, new Rectangle(hitbox.X, hitbox.Y, borderWidth, hitbox.Height), borderColor);
+            // Right border
+            spriteBatch.Draw(pixel, new Rectangle(hitbox.X + hitbox.Width - borderWidth, hitbox.Y, borderWidth, hitbox.Height), borderColor);
 
             // Draw text
             string displayText = _currentText;
-            if (string.IsNullOrEmpty(displayText) && !_isFocused)
+            Color textColor = Color.Black;
+
+            if (string.IsNullOrEmpty(displayText))
             {
-                displayText = _hintText;
+                if (_isFocused)
+                {
+                    // Show just blinking cursor when focused and empty
+                    displayText = Main.GameUpdateCount % 40 < 20 ? "|" : "";
+                    textColor = Color.Black;
+                }
+                else
+                {
+                    displayText = _hintText;
+                    textColor = Color.Gray;
+                }
+            }
+            else
+            {
+                // Show cursor after text when focused and has content
+                if (_isFocused && Main.GameUpdateCount % 40 < 20)
+                    displayText += "|";
+                textColor = Color.Black;
             }
 
-            if (_isFocused && Main.GameUpdateCount % 40 < 20)
-                displayText += "|";
-
             Vector2 textPos = new Vector2(hitbox.X + 10, hitbox.Y + 12);
-            Color textColor = string.IsNullOrEmpty(_currentText) && !_isFocused ? Color.Gray : Color.White;
-            
-            Utils.DrawBorderString(spriteBatch, displayText, textPos, textColor, 0.9f);
+
+            Utils.DrawBorderStringFourWay(spriteBatch, FontAssets.MouseText.Value, displayText, textPos.X, textPos.Y, textColor, Color.Transparent, Vector2.Zero, 0.9f);
         }
     }
 }

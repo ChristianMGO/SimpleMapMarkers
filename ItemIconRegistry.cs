@@ -1,29 +1,45 @@
 using System.Collections.Generic;
+using Terraria;
+using Terraria.ID;
 
 namespace SimpleMapMarkers
 {
     public static class ItemIconRegistry
     {
-        // Special asset paths for non-item icons
-        public const string ChestIconPath = "Terraria/Images/UI/Map/Map_Icon_Chest";
-        public const string HouseIconPath = "Terraria/Images/UI/House_HousingQuery";
+        public const string CustomMarkerRedPath = "SimpleMapMarkers/Assets/Images/MapMarkers/marker_icon_red";
+        public const string CustomMarkerGreenPath = "SimpleMapMarkers/Assets/Images/MapMarkers/marker_icon_green";
+        public const string CustomMarkerBluePath = "SimpleMapMarkers/Assets/Images/MapMarkers/marker_icon_blue";
+        public const string CustomMarkerYellowPath = "SimpleMapMarkers/Assets/Images/MapMarkers/marker_icon_yellow";
+        // Special icon path for house (XNB files work - just remove .xnb extension)
+        public const string HouseIconPath = "Images/UI/DisplaySlots_5";
 
         // Dictionary of item IDs and display names
         public static readonly Dictionary<int, string> ItemNames = new Dictionary<int, string>
         {
-            { 1, "Iron Pickaxe" },
-            { 2, "Iron Broadsword" },
-            { 3, "Iron Shortsword" },
-            { 4, "Iron Hammer" },
-            { 5, "Iron Axe" },
-            { 6, "Iron Ore" },
-            { 7, "Copper Ore" },
-            { 8, "Gold Ore" },
-            { 9, "Silver Ore" },
-            { 10, "Copper Watch" },
-            { -1, "Chest" }, // Special key for chest map icon
-            { -2, "House" }, // Special key for house UI icon
-            // Add more items/icons as needed
+            // Special icons
+            { -5, "Yellow Marker" },
+            { -4, "Green Marker" },
+            { -3, "Blue Marker" },
+            { -2, "Red Marker" },
+            { -1, "House" },
+
+            // Common useful items for markers
+            { ItemID.Chest, "Chest" },
+            { ItemID.IronAnvil, "Anvil" },
+            { ItemID.Bed, "Bed" },
+            { ItemID.GoldPickaxe, "Pickaxe" },
+            { ItemID.IronBar, "Iron" },
+            { ItemID.CopperBar, "Copper" },
+            { ItemID.GemLockDiamond, "Diamond" },
+            { ItemID.GemLockAmethyst, "Amethyst" },
+            { ItemID.GemLockTopaz, "Topaz" },
+            { ItemID.GemLockAmber, "Amber" },
+            { ItemID.GemLockRuby, "Ruby" },
+            { ItemID.GemLockEmerald, "Emerald" },
+            { ItemID.GemLockSapphire, "Sapphire" },
+            { ItemID.LifeCrystal, "Life Crystal" },
+            { ItemID.LifeFruit, "Life Fruit" },
+            { ItemID.StrangePlant2, "Strange Plant"},
         };
     }
 }
