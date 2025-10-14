@@ -1,1 +1,28 @@
-SimpleMapMarkers is a mod for Terraria (using tModLoader) that let's you add markers to your world map. More features coming soon.
+This mod let's you add markers to your world map. More features coming soon.
+
+Multiplayer supported.
+
+Currently being worked on, if you have any feedback, or encounter any bug, please let me know!
+Bugs may occur, please make a backup of your world to be extra safe.
+
+
+[h2]How to use[/h2]
+
+Go in your Controls configuration, and set the keybinds to your preference.
+
+Press P (Default keybind) to create a marker at your current position.
+Or open the fullscreen map and right click (Mouse2, default keybind) where you want to create a marker.
+
+On the Create Marker menu, type a name, select an icon and choose whether or not you want the marker to be public, then click on Confirm. (Public is used in multiplayer, makes it so everyone in the server can see the marker)
+
+To delete a marker you need to hover it and press the scrollwheel (Mouse3, default keybind)
+
+[h3]Known Issues[/h3]
+
+- In rare occasions, you are unable to delete your own public marker.
+
+[h3]Disclaimer[/h3]
+AI was used to help me develop this mod.
+
+[quote=tModLoader SimpleMapMarkers]
+Developed By ChristianMGO[/quote]

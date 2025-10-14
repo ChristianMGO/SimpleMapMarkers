@@ -15,12 +15,14 @@ namespace SimpleMapMarkers
         public static ModKeybind AddMarkerKeybind;
         public static ModKeybind AddMarkerRightClickKeybind;
         public static ModKeybind RemoveMarkerKeybind;
+        public static ModKeybind ToggleAdminModeKeybind;
 
         public override void Load()
         {
             AddMarkerKeybind = KeybindLoader.RegisterKeybind(this, "Add Marker at Player Position", "P");
             AddMarkerRightClickKeybind = KeybindLoader.RegisterKeybind(this, "Add Map Marker in Fullscreen map", "Mouse2");
             RemoveMarkerKeybind = KeybindLoader.RegisterKeybind(this, "Remove Hovered Marker", "Mouse3");
+            ToggleAdminModeKeybind = KeybindLoader.RegisterKeybind(this, "Toggle Admin Mode", "None");
 
             // Preload all icon textures
             if (!Main.dedServ)
@@ -239,6 +241,7 @@ namespace SimpleMapMarkers
             AddMarkerKeybind = null;
             AddMarkerRightClickKeybind = null;
             RemoveMarkerKeybind = null;
+            ToggleAdminModeKeybind = null;
         }
     }
 }

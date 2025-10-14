@@ -200,7 +200,11 @@ namespace SimpleMapMarkers
 
                 // Get isPublic state from checkbox (false if in singleplayer where checkbox doesn't exist)
                 bool isPublic = publicCheckbox != null && publicCheckbox.IsChecked;
-
+                if (selectedIconID == 1)
+                {
+                    // Ensure the selected icon is not the "None" icon
+                    selectedIconID = -2; // Default to custom red marker if "None" was selected
+                }
                 // Create the marker with selected name, icon, and public/private setting
                 MarkerSystem.AddMarker(
                     MarkerSystem.PendingMarkerPosition.Value,

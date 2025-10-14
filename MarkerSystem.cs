@@ -13,7 +13,7 @@ namespace SimpleMapMarkers
 
         // Temporary storage for position when waiting for UI input
         public static Vector2? PendingMarkerPosition = null;
-
+        public static bool IsAdminMode = false;
         public static void AddMarker(Vector2 worldPosition, int iconID, string name, bool isPublic = false)
         {
             string ownerName = Main.LocalPlayer.name;
@@ -42,7 +42,8 @@ namespace SimpleMapMarkers
 
                 if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer ||
                     marker.OwnerName == Main.LocalPlayer.name ||
-                    Main.netMode == Terraria.ID.NetmodeID.Server)
+                    Main.netMode == Terraria.ID.NetmodeID.Server ||
+                    IsAdminMode)
                 {
                     Main.NewText("Marker removed: " + marker.Name, Color.White);
 

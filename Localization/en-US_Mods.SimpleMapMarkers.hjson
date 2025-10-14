@@ -6,6 +6,7 @@ Keybinds: {
 	"Add Map Marker in Fullscreen map.DisplayName": Add  Map  Marker in  Fullscreen map
 	"Add Marker at Player Position.DisplayName": Add  Marker at  Player  Position
 	"Remove Hovered Marker.DisplayName": Remove  Hovered  Marker
+	"Toggle Admin Mode.DisplayName": Toggle  Admin  Mode
 }
 
 Configs: {

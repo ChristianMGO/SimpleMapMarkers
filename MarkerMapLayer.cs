@@ -15,6 +15,13 @@ namespace SimpleMapMarkers
             if (!Main.mapFullscreen)
                 return;
 
+            // Show admin mode indicator
+            if (MarkerSystem.IsAdminMode)
+            {
+                Vector2 textPos = new Vector2(20, Main.screenHeight - 40);
+                Utils.DrawBorderString(Main.spriteBatch, "[ADMIN MODE]", textPos, Color.Red, 1.2f);
+            }
+
             // Handle right-click marker placement
             HandleRightClickPlacement();
 
